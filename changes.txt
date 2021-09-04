@@ -1,0 +1,3 @@
+From command `npm run doc`
+
+  typedoc does not take options 'target' or 'mode' anymore.
