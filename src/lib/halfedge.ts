@@ -25,6 +25,7 @@ export class HalfEdge {
   prev: HalfEdge;
   face: Face;
   vec: vec2;
+  cycleID: number;
 
   /**
    * Creates a new half edge with an id, as well as start and end vertices
@@ -44,6 +45,8 @@ export class HalfEdge {
 
     this.vec = vec2.create();
     vec2.subtract(this.vec, this.end.position, this.start.position);
+
+    this.cycleID = -1;
   }
 
   /**

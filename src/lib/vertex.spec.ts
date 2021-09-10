@@ -9,3 +9,13 @@ test('Vertex: constructor', (t) => {
   t.assert(v.position[1] === 2);
   t.assert(v.halfedge === null);
 });
+
+test('Vertex: Lexicographic order', (t) => {
+  const v1: Vertex = new Vertex(0, [0, 2]);
+  const v2: Vertex = new Vertex(1, [-2, 5]);
+  const v3: Vertex = new Vertex(2, [0, -3]);
+
+  t.assert(v2.isLexicographicallyLessThan(v1));
+  t.assert(v2.isLexicographicallyLessThan(v3));
+  t.assert(v3.isLexicographicallyLessThan(v1));
+});

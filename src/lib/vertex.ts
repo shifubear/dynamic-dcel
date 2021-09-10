@@ -19,4 +19,16 @@ export class Vertex {
     this.position = pos;
     this.halfedge = null;
   }
+
+  isLexicographicallyLessThan(v2: Vertex) {
+    if (this.position[0] < v2.position[0]) {
+      return true;
+    }
+    if (this.position[0] === v2.position[0]) {
+      if (this.position[1] < v2.position[1]) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

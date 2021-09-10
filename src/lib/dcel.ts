@@ -39,6 +39,8 @@ export class DCEL {
    *
    * @throws Throws an error if a vertex exists in the position the new vertex is being added.
    * @throws Throws an error if the position doesn't have integer coordinates.
+   *
+   * @returns Returns the newly created vertex
    */
   addVertex(position: vec2) {
     if (!Number.isInteger(position[0]) || !Number.isInteger(position[1])) {
@@ -51,110 +53,163 @@ export class DCEL {
     }
     const v = new Vertex(this.vertexRecord.length, position);
     this.vertexRecord.push(v);
+
+    return v;
   }
 
-  // addEdge(startID: number, endID: number) {
-  //   // Add pair of halfedges to the halfedge record
-  //   const start: Vertex = this.vertexRecord[startID];
-  //   const end: Vertex = this.vertexRecord[endID];
-  //   const h1: HalfEdge = new HalfEdge(this.halfedgeRecord.length, start, end);
-  //   const h2: HalfEdge = new HalfEdge(
-  //     this.halfedgeRecord.length + 1,
-  //     end,
-  //     start
-  //   );
-  //   // Assign each other as twins
-  //   h1.twin = h2;
-  //   h2.twin = h1;
-  //   // Store the halfedges to update with
-  //   let prevmax: HalfEdge = null;
-  //   let prevmin: HalfEdge = null;
-  //   let nextmax: HalfEdge = null;
-  //   let nextmin: HalfEdge = null;
-  //   // Handle the edge relations around the end vertex
-  //   if (end.halfedge == null) {
-  //     // If the end vertex has no edges, then h1.next is h2
-  //     h1.next = h2;
-  //     h2.prev = h1;
-  //     end.halfedge = h2;
-  //   } else {
-  //     // Otherwise determine which halfedge is prev of h2
-  //     const s = end.halfedge;
-  //     let iter = s;
-  //     let max: HalfEdge = s;
-  //     let min: HalfEdge = s;
-  //     let maxAngle = h2.cwAngle(max);
-  //     let minAngle = h2.cwAngle(min);
-  //     do {
-  //       if (h2.cwAngle(iter) > maxAngle) {
-  //         max = iter;
-  //         maxAngle = h2.cwAngle(iter);
-  //       }
-  //       if (h2.cwAngle(iter) < minAngle) {
-  //         min = iter;
-  //         minAngle = h2.cwAngle(iter);
-  //       }
-  //       iter = iter.twin.next;
-  //     } while (iter.id !== s.id);
-  //     prevmax = max;
-  //     prevmin = min;
-  //   }
-  //   // Handle the edge relations around the start vertex
-  //   if (start.halfedge == null) {
-  //     // If the start vertex has no edges, then h1.prev is h2
-  //     h1.prev = h2;
-  //     h2.next = h1;
-  //     start.halfedge = h1;
-  //   } else {
-  //     // Otherwise determine which halfedge is prev of h1
-  //     const s = start.halfedge;
-  //     let iter: HalfEdge = s;
-  //     let max: HalfEdge = s;
-  //     let min: HalfEdge = s;
-  //     let maxAngle: number = h1.cwAngle(max);
-  //     let minAngle: number = h1.cwAngle(min);
-  //     do {
-  //       if (h1.cwAngle(iter) > maxAngle) {
-  //         max = iter;
-  //         maxAngle = h1.cwAngle(iter);
-  //       }
-  //       if (h1.cwAngle(iter) < minAngle) {
-  //         min = iter;
-  //         minAngle = h1.cwAngle(iter);
-  //       }
-  //       iter = iter.twin.next;
-  //     } while (iter.id !== s.id);
-  //     nextmax = max;
-  //     nextmin = min;
-  //   }
-  //   if (end.halfedge != null) {
-  //     h2.prev = prevmax;
-  //     prevmax.next = h2;
-  //     h1.next = prevmin;
-  //     prevmin.prev = h1;
-  //   }
-  //   if (start.halfedge != null) {
-  //     h2.next = nextmax;
-  //     nextmax.prev = h2;
-  //     h1.prev = nextmin;
-  //     nextmin.next = h1;
-  //   }
-  //   // Determine if new faces were formed or not
-  //   if (h1.next.id !== h2.id && h2.next.id !== h1.id) {
-  //     // Full search
-  //   } else if (h1.next.id !== h2.id && h2.next.id === h1.id) {
-  //     h1.face = h1.next.face;
-  //     h2.face = h1.face;
-  //   } else if (h1.next.id === h2.id && h2.next.id !== h1.id) {
-  //     h2.face = h2.next.face;
-  //     h1.face = h2.face;
-  //   } else {
-  //     // Point location query to find face start belongs to
-  //     // f = this.faceOf(start);
-  //     // h1.face = f; h2.face = f;
-  //   }
-  //   // Add the halfedges to the record
-  //   this.halfedgeRecord.push(h1);
-  //   this.halfedgeRecord.push(h2);
-  // }
+  /**
+   * Adds a new halfedge pair to the DCEL between vertices start and end
+   * @param startID
+   * @param endID
+   *
+   * @returns The pair of halfedges that define the newly created edge
+   */
+  addEdge(startID: number, endID: number) {
+    const startV = this.vertexRecord[startID];
+    const endV = this.vertexRecord[endID];
+
+    const h1 = new HalfEdge(this.halfedgeRecord.length, startV, endV);
+    const h2 = new HalfEdge(this.halfedgeRecord.length + 1, endV, startV);
+
+    // Set the twin halfedges
+    h1.twin = h2;
+    h2.twin = h1;
+
+    // Determine the relations around the end vertex
+    if (endV.halfedge === null) {
+      // If the end vertex has no halfedges
+      h1.next = h2;
+      h2.prev = h1;
+      endV.halfedge = h2;
+    } else {
+      // Find the halfedge that is closest in the ccw direction
+      const start: HalfEdge = endV.halfedge;
+      let iter: HalfEdge = start;
+      let min: HalfEdge = start;
+      let max: HalfEdge = start;
+      let minAngle: number = h2.cwAngle(iter);
+      let maxAngle: number = h2.cwAngle(iter);
+
+      do {
+        iter = iter.twin.next;
+        const angle: number = h2.cwAngle(iter);
+        if (angle < minAngle) {
+          min = iter;
+          minAngle = angle;
+        }
+        if (angle > maxAngle) {
+          max = iter;
+          maxAngle = angle;
+        }
+      } while (iter.id !== start.id);
+
+      h1.next = min;
+      min.prev = h1;
+      h2.prev = max.twin;
+      max.twin.next = h2;
+    }
+
+    // Determine the relations around the start vertex
+    if (startV.halfedge === null) {
+      // If the start vertex has no halfedges
+      h2.next = h1;
+      h1.prev = h2;
+      startV.halfedge = h1;
+    } else {
+      // Find the halfedge that is closest in the ccw direction
+      const start: HalfEdge = startV.halfedge;
+      let iter: HalfEdge = start;
+      let min: HalfEdge = start;
+      let max: HalfEdge = start;
+      let minAngle: number = h1.cwAngle(iter);
+      let maxAngle: number = h1.cwAngle(iter);
+      do {
+        iter = iter.twin.next;
+        const angle: number = h1.cwAngle(iter);
+        if (angle < minAngle) {
+          minAngle = angle;
+          min = iter;
+        }
+        if (angle > maxAngle) {
+          maxAngle = angle;
+          max = iter;
+        }
+      } while (iter.id !== start.id);
+
+      h1.prev = max.twin;
+      max.twin.next = h1;
+      h2.next = min;
+      min.prev = h2;
+    }
+
+    // Determine if any faces were created
+    if (this.halfedgeRecord.length === 0) {
+      // If this is the first edge added, no faces were created
+      this.faceRecord[0].inner = h1;
+      h1.face = this.faceRecord[0];
+      h2.face = this.faceRecord[0];
+    } else {
+      // Traverse the edges using .next to see if a loop is formed
+      let iter: HalfEdge = h1;
+      let newFace = true;
+      do {
+        if (iter.id === h2.id) {
+          // Not a closed face
+          newFace = false;
+          break;
+        }
+        iter = iter.next;
+      } while (iter.id !== h1.id);
+
+      if (newFace) {
+        this.recomputeFaces();
+      }
+    }
+
+    this.halfedgeRecord.push(h1);
+    this.halfedgeRecord.push(h2);
+
+    return { h1, h2 };
+  }
+
+  /**
+   * Subroutine to recompute the faces in the DCEL.
+   * Requires traversal of all halfedges O(|E|) time.
+   */
+  recomputeFaces() {
+    // Compute all the existing loops in DCEL
+    let checkedCount = this.halfedgeRecord.length;
+    const checkedHE = Array(checkedCount).fill(false);
+    const Cycles = [];
+    let idx = -1;
+    while (checkedCount > 0) {
+      idx += 1;
+      if (checkedHE[idx] === true) {
+        continue;
+      }
+
+      const start: HalfEdge = this.halfedgeRecord[idx];
+      let iter: HalfEdge = start;
+      checkedHE[idx] = true;
+      checkedCount -= 1;
+      const Cycle = {
+        id: Cycles.length,
+        leftVertexID: -1,
+      };
+      let leftVertex: Vertex = iter.start;
+      do {
+        iter.cycleID = Cycle.id;
+        checkedHE[iter.id] = true;
+        checkedCount -= 1;
+
+        iter = iter.next;
+        if (iter.start.isLexicographicallyLessThan(leftVertex)) {
+          leftVertex = iter.start;
+        }
+      } while (iter.id !== start.id);
+      Cycle.leftVertexID = leftVertex.id;
+      Cycles.push(Cycle);
+    }
+    console.log(Cycles);
+  }
 }
