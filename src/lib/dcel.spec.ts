@@ -2,8 +2,6 @@ import test from 'ava';
 import { vec2 } from 'gl-matrix';
 
 import { DCEL } from './dcel';
-import { HalfEdge } from './halfedge';
-import { Vertex } from './vertex';
 
 test('DCEL: Constructor', async (t) => {
   const dcel = new DCEL();
@@ -49,52 +47,76 @@ test('DCEL: addVertex', async (t) => {
 
 test('DCEL: recomputeFaces', async (t) => {
   const dcel = new DCEL();
-  dcel.vertexRecord = [
-    new Vertex(0, [0, 0]),
-    new Vertex(1, [1, 2]),
-    new Vertex(2, [3, 2]),
-    new Vertex(3, [2, 0]),
-  ];
-  const h1 = new HalfEdge(0, dcel.vertexRecord[0], dcel.vertexRecord[1]);
-  const h2 = new HalfEdge(1, dcel.vertexRecord[1], dcel.vertexRecord[0]);
-  const h3 = new HalfEdge(2, dcel.vertexRecord[1], dcel.vertexRecord[2]);
-  const h4 = new HalfEdge(3, dcel.vertexRecord[2], dcel.vertexRecord[1]);
-  const h5 = new HalfEdge(4, dcel.vertexRecord[2], dcel.vertexRecord[3]);
-  const h6 = new HalfEdge(5, dcel.vertexRecord[3], dcel.vertexRecord[2]);
-  const h7 = new HalfEdge(6, dcel.vertexRecord[3], dcel.vertexRecord[0]);
-  const h8 = new HalfEdge(7, dcel.vertexRecord[0], dcel.vertexRecord[3]);
-  h1.twin = h2;
-  h2.twin = h1;
-  h3.twin = h4;
-  h4.twin = h3;
-  h5.twin = h6;
-  h6.twin = h5;
-  h7.twin = h8;
-  h8.twin = h7;
-  h1.next = h3;
-  h3.next = h5;
-  h5.next = h7;
-  h7.next = h1;
-  h1.prev = h7;
-  h7.prev = h5;
-  h5.prev = h3;
-  h3.prev = h1;
-  h2.next = h4;
-  h4.next = h6;
-  h6.next = h8;
-  h8.next = h2;
-  h2.prev = h8;
-  h8.prev = h6;
-  h6.prev = h4;
-  h4.prev = h2;
-  dcel.halfedgeRecord = [h1, h2, h3, h4, h5, h6, h7, h8];
-  dcel.recomputeFaces();
 
-  t.assert(dcel.faceRecord.length === 2);
-  t.assert(dcel.faceRecord[0].outer === null);
-  t.assert(dcel.faceRecord[0].inner.id === h8.id);
-  t.assert(dcel.faceRecord[1].inner === null);
-  t.assert(dcel.faceRecord[1].outer.id === h1.id);
+  // Testing situation as outlined in deBerg Figure 2.6
+  // Component 1
+  dcel.addVertex([-8, 0]);
+  dcel.addVertex([-6, 3]);
+  dcel.addVertex([-7, 7]);
+  dcel.addVertex([-2, 7]);
+  dcel.addVertex([2, 5]);
+  dcel.addVertex([5, 6]);
+  dcel.addVertex([9, 8]);
+  dcel.addVertex([11, 2]);
+  dcel.addVertex([10, -1]);
+  dcel.addVertex([5, -4]);
+  dcel.addVertex([-1, -1]);
+  dcel.addVertex([-5, -2]);
+  dcel.addEdge(0, 1);
+  dcel.addEdge(1, 2);
+  dcel.addEdge(2, 3);
+  dcel.addEdge(3, 4);
+  dcel.addEdge(4, 5);
+  dcel.addEdge(5, 6);
+  dcel.addEdge(6, 7);
+  dcel.addEdge(7, 8);
+  dcel.addEdge(8, 9);
+  dcel.addEdge(9, 10);
+  dcel.addEdge(10, 11);
+  dcel.addEdge(11, 0);
+
+  // Component 2
+  dcel.addVertex([-3, 1]);
+  dcel.addVertex([-4, 2]);
+  dcel.addVertex([-3, 3]);
+  dcel.addVertex([-4, 5]);
+  dcel.addVertex([0, 4]);
+  dcel.addVertex([-1, 1]);
+  dcel.addEdge(12, 13);
+  dcel.addEdge(13, 14);
+  dcel.addEdge(14, 15);
+  dcel.addEdge(15, 16);
+  dcel.addEdge(16, 17);
+  dcel.addEdge(17, 12);
+  dcel.addEdge(14, 17);
+
+  // Component 3
+  dcel.addVertex([4, 0]);
+  dcel.addVertex([2, 2]);
+  dcel.addVertex([4, 4]);
+  dcel.addVertex([8, 5]);
+  dcel.addVertex([10, 3]);
+  dcel.addVertex([8, 0]);
+  dcel.addEdge(18, 19);
+  dcel.addEdge(19, 20);
+  dcel.addEdge(20, 21);
+  dcel.addEdge(21, 22);
+  dcel.addEdge(22, 23);
+  dcel.addEdge(23, 18);
+
+  // Outer cycle
+
+  const cycles = dcel.recomputeFaces();
+
+  t.assert(cycles.length === 8);
+  // t.assert(cycles[0].id === 0);
+  // t.assert(cycles[0].leftVertexID === 0);
+  // t.assert(cycles[0].leftStart.id === 0);
+  // t.assert(cycles[0].isBoundary === false);
+  // t.assert(cycles[1].id === 1);
+  // t.assert(cycles[1].leftVertexID === 0);
+  // t.assert(cycles[1].leftStart.id === 7);
+  // t.assert(cycles[1].isBoundary === true);
 });
 
 test('DCEL: addEdge', async (t) => {

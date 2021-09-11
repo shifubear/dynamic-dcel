@@ -33,11 +33,11 @@ test('HalfEdge: cwAngle', (t) => {
 
   // Test 1: Computes the correct angles for different halfedges
   t.assert(
-    h1.cwAngle(h2) - Math.PI / 2 < 0.001,
+    Math.abs(h1.cwAngle(h2) - Math.PI / 2) < 0.001,
     "Doesn't compute the correct cwAngle"
   );
   t.assert(
-    h2.cwAngle(h1) - (3 * Math.PI) / 2 < 0.001,
+    Math.abs(h2.cwAngle(h1) - (3 * Math.PI) / 2) < 0.001,
     "Doesn't compute the correct cwAngle"
   );
 

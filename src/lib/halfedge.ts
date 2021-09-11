@@ -50,7 +50,7 @@ export class HalfEdge {
   }
 
   /**
-   * Computes the clockwise angle between this halfedge and h2. Both halfedges must have the same start vertex.
+   * Computes the clockwise angle in radians between this halfedge and h2. Both halfedges must have the same start vertex.
    * @param h2  A halfedge that shares the same start vertex as this halfedge.
    */
   cwAngle(h2: HalfEdge) {
@@ -64,10 +64,14 @@ export class HalfEdge {
       );
     }
 
-    const dot = vec2.dot(this.vec, h2.vec);
-    const det = this.vec[0] * h2.vec[1] - h2.vec[0] * this.vec[1];
+    const dot = vec2.dot(h2.vec, this.vec);
+    const det = h2.vec[0] * this.vec[1] - this.vec[0] * h2.vec[1];
 
-    const angle = Math.atan2(det, dot);
+    let angle = Math.atan2(det, dot);
+
+    if (angle < 0) {
+      angle = 2 * Math.PI + angle;
+    }
 
     return angle;
   }

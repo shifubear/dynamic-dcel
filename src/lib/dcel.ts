@@ -162,7 +162,7 @@ export class DCEL {
       } while (iter.id !== h1.id);
 
       if (newFace) {
-        this.recomputeFaces();
+        // this.recomputeFaces();
       }
     }
 
@@ -188,6 +188,7 @@ export class DCEL {
         continue;
       }
 
+      // Compute a cycle by traversing .next
       const start: HalfEdge = this.halfedgeRecord[idx];
       let iter: HalfEdge = start;
       checkedHE[idx] = true;
@@ -195,6 +196,8 @@ export class DCEL {
       const Cycle = {
         id: Cycles.length,
         leftVertexID: -1,
+        leftStart: start,
+        isBoundary: false,
       };
       let leftVertex: Vertex = iter.start;
       do {
@@ -205,11 +208,38 @@ export class DCEL {
         iter = iter.next;
         if (iter.start.isLexicographicallyLessThan(leftVertex)) {
           leftVertex = iter.start;
+          Cycle.leftStart = iter;
         }
       } while (iter.id !== start.id);
       Cycle.leftVertexID = leftVertex.id;
+
+      // Check if this cycle is a boundary or a hole
+      const h2: HalfEdge = Cycle.leftStart;
+      const h1: HalfEdge = h2.prev.twin;
+      const angle = h1.cwAngle(h2);
+      console.log('halfedges: ' + h1.id + ', ' + h2.id);
+      console.log(
+        'For cycle ' + Cycle.id + ' the angle is: ' + (angle * 180) / Math.PI
+      );
+      if (angle < Math.PI) {
+        Cycle.isBoundary = true;
+      }
+
       Cycles.push(Cycle);
     }
+
     console.log(Cycles);
+    return Cycles;
   }
 }
+
+// class Cycle {
+//   id: number;
+//   leftVertex: Vertex;
+//   leftHalfEdge: HalfEdge;
+//   isBoundary: boolean;
+
+//   constructor() {
+//     id =
+//   }
+// }
