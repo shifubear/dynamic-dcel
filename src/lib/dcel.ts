@@ -179,11 +179,14 @@ export class DCEL {
   recomputeFaces() {
     // Compute all the existing loops in DCEL
     let checkedCount = this.halfedgeRecord.length;
+    console.log(checkedCount);
     const checkedHE = Array(checkedCount).fill(false);
     const Cycles = [];
     let idx = -1;
     while (checkedCount > 0) {
       idx += 1;
+      console.log(idx);
+
       if (checkedHE[idx] === true) {
         continue;
       }
@@ -212,15 +215,12 @@ export class DCEL {
         }
       } while (iter.id !== start.id);
       Cycle.leftVertexID = leftVertex.id;
+      console.log('Created cycle from ' + leftVertex.id);
 
       // Check if this cycle is a boundary or a hole
       const h2: HalfEdge = Cycle.leftStart;
       const h1: HalfEdge = h2.prev.twin;
       const angle = h1.cwAngle(h2);
-      console.log('halfedges: ' + h1.id + ', ' + h2.id);
-      console.log(
-        'For cycle ' + Cycle.id + ' the angle is: ' + (angle * 180) / Math.PI
-      );
       if (angle < Math.PI) {
         Cycle.isBoundary = true;
       }
@@ -228,7 +228,7 @@ export class DCEL {
       Cycles.push(Cycle);
     }
 
-    console.log(Cycles);
+    // console.log(Cycles);
     return Cycles;
   }
 }

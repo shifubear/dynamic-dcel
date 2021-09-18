@@ -104,11 +104,10 @@ test('DCEL: recomputeFaces', async (t) => {
   dcel.addEdge(22, 23);
   dcel.addEdge(23, 18);
 
-  // Outer cycle
-
   const cycles = dcel.recomputeFaces();
+  // console.log(cycles);
 
-  t.assert(cycles.length === 8);
+  t.assert(cycles.length === 7);
   // t.assert(cycles[0].id === 0);
   // t.assert(cycles[0].leftVertexID === 0);
   // t.assert(cycles[0].leftStart.id === 0);
@@ -184,15 +183,30 @@ test('DCEL: addEdge', async (t) => {
   const h7 = dcel.halfedgeRecord[6];
   const h8 = dcel.halfedgeRecord[7];
   t.assert(dcel.halfedgeRecord.length === 8);
-  t.assert(h4.next.id === h7.id);
-  t.assert(h7.prev.id === h4.id);
+  t.assert(h7.twin.id === h8.id);
+  t.assert(h8.twin.id === h7.id);
   t.assert(h7.next.id === h6.id);
   t.assert(h6.prev.id === h7.id);
-  t.assert(h5.next.id === h8.id);
-  t.assert(h8.prev.id === h5.id);
+  t.assert(h4.next.id === h7.id);
+  t.assert(h7.prev.id === h4.id);
   t.assert(h8.next.id === h3.id);
   t.assert(h3.prev.id === h8.id);
-  // t.assert(dcel.faceRecord.length == 2);
-  // t.assert(dcel.faceRecord[0].inner.id === h7.id);
-  // t.assert(dcel.faceRecord[1].outer.id === h8.id);
+  t.assert(h5.next.id === h8.id);
+  t.assert(h8.prev.id === h5.id);
+
+  // Test 5: Correctly inserts a bisecting halfedge in a bounded region
+  dcel.addEdge(v2.id, v3.id);
+  const h9 = dcel.halfedgeRecord[8];
+  const h10 = dcel.halfedgeRecord[9];
+  t.assert(dcel.halfedgeRecord.length === 10);
+  t.assert(h9.twin.id === h10.id);
+  t.assert(h10.twin.id === h9.id);
+  t.assert(h9.next.id === h3.id);
+  t.assert(h3.prev.id === h9.id);
+  t.assert(h1.next.id === h9.id);
+  t.assert(h9.prev.id === h1.id);
+  t.assert(h8.next.id === h10.id);
+  t.assert(h10.prev.id === h8.id);
+  t.assert(h10.next.id === h5.id);
+  t.assert(h5.prev.id === h10.id);
 });
